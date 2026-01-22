@@ -1,0 +1,18 @@
+numpy==1.*      # for numerical computation
+pyyaml
+lpips           # for perceptual loss
+opencv-python==4.7.*   # for image processing
+natsort         # for globbing files in a sorted order
+thop            # for FLOPs & params computation
+pandas          # [optional] for measurement data processing
+
+# [training-time visualization]
+tensorboard     # for tensorboard visualization
+setproctitle    # for process name visualization
+tqdm            # for progress bar visualization
+torchinfo       # for model summary visualization
+
+# [plot data visualization]
+matplotlib      # for plot data visualization
+umap-learn      # for UMAP visualization
+scikit-learn    # for t-SNE visualization

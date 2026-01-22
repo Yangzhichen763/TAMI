@@ -1,0 +1,289 @@
+name: LOL-v1 # [Optional] the name will be replaced with the config file name if not specified.
+gpu_ids:
+  train: [0]
+  val: [1]
+
+# [Optional] if True, use distributed training.
+# Command example: `python -m torch.distributed.launch --nproc_per_node=1 train.py`
+dist: False
+
+# Enable torch autograd anomaly detection (useful for debugging NaNs / invalid gradients).
+grad_anomaly_detect: False
+
+# Manually set the random seed for reproducibility.
+manual_seed: 114514
+
+
+# dataset and data loader settings
+datasets:
+  # The phase of the dataset.
+  # Must be one of 'train', 'val', 'test'. Or 'test_1', 'test_2', etc.
+  train:
+    name: Train-Set-Name
+    # The class name of the dataset.
+    # Must be registered in `basic.utils.registry.DATASET_REGISTRY` by using `@DATASET_REGISTRY.register()`.
+    type: PairedImageDataset
+
+    # Each dataset should cantains the following attributes:
+    # (xx can be filled with 'gt', 'lq', etc., and allows multiple values for certain datasets)
+    #   - dataroot (str): root directory of the dataset.
+    #   - xx_dir (str): directory of the xx images.
+    #   - [Optional] xx_ext (str or list or tuple): extensions of the xx images.
+    #   or
+    #   - dataroot_xx (str): root directory of the xx images
+    dataroot_lq: ~/Datasets/LLIE/LOL-v1/our485/low
+    dataroot_gt: ~/Datasets/LLIE/LOL-v1/our485/high
+
+    # Dataloader Configuration.
+    batch_size_per_gpu: 8
+    num_workers_per_gpu: 16
+    use_shuffle: true
+    pin_memory: true        # [Optional]
+    prefetch_mode: cpu      # [Optional] 'cpu' or 'cuda', default is 'cuda'
+
+    # Data Sampler
+    # [Optional]
+    # The `sampler` is used to sample the data for each iteration.
+    # The usage of `sampler` refers to the `data_sampler` in basic.datasets.
+    #   - type (str): the class name of the sampler.
+    #   - [Optional] params (dict): the parameters of the sampler.
+    sampler:
+      type: VideoClipSampler
+      seq_length: 30
+      batch_size: ${batch_size_per_gpu} # placeholder is available in the configuration file.
+      shuffle: ${use_shuffle}
+      drop_last: True
+      has_end_signal: True
+      dynamic_batch_size: True
+      batch_first: True
+
+    # Data Augmentation Configuration.
+    # [Optional]
+    # The `transforms` list contains the data augmentation operations to be performed.
+    # Each operation is defined as a dictionary with the following keys:
+    #   - type (str): the class name of the data augmentation operation.
+    #   - [Optional] params (dict): the parameters of the data augmentation operation.
+    # The `transforms` list is executed in the order of the list.
+    transforms:
+      - type: RandomCrop
+        params:
+          size: 256
+      - type: RandomHorizontalFlip
+      - type: RandomVerticalFlip
+      - type: ToTensor
+
+  val:
+    name: Val-Set-Name
+    type: PairedImageDataset
+    dataroot_lq: ~/Datasets/LLIE/LOL-v1/eval15/low
+    dataroot_gt: ~/Datasets/LLIE/LOL-v1/eval15/high
+
+    # Dataloader Configuration.
+    num_workers_per_gpu: 4
+
+    # Data Sampler, the `sampler` can be the same with the training sampler.
+    # [Optional]
+    sampler:
+      type: VideoClipSampler
+      batch_size: 1
+      has_end_signal: True
+
+  test:
+    name: Test-Set-Name
+    type: ImageDataset
+    dataroot_lq: ~/Datasets/LLIE/LOL-v1/eval15/low
+    dataroot_gt: ~/Datasets/LLIE/LOL-v1/eval15/high
+
+    # Data Sampler, the `sampler` can be the same with the training sampler.
+    # [Optional]
+    sampler:
+      type: VideoClipSampler
+      batch_size: 1
+      has_end_signal: True
+
+
+path:
+  # The project root. All relative paths are relative to this.
+  root: ./
+
+  # Experiments root only valid only in the training phase. The subdirectories of experiments are as follows:
+  # <experiments_root>/
+  # ├── models/
+  # ├── training_state/
+  # ├── val_images/
+  # └── .log
+  ### [Optional] default is 'experiments' if not specified.
+  experiments_root: experiments
+
+  # Results root only valid only in the testing phase. The subdirectories of results are as follows:
+  # <results_root>/
+  # ├── test_images/
+  # └── .log
+  ### [Optional] default is 'results' if not specified.
+  results_root: results
+
+  # Path to load the pre-trained weights.
+  # If in the training phase and `resume_state` exists, the pre-set pre-trained weights will not be loaded to the network.
+  pretrain_model_G: 
+    train: experiments/pretrained_weights/HVI_CIDNet/LOLv1/w_perc.pth
+    test: experiments/pretrained_weights/HVI_CIDNet/LOLv1/w_perc.pth
+  # The following is the example of loading pre-trained weights for different phases.
+  # pretrain_model_G:
+  #   train: experiments/pretrained_weights/HVI-CIDNet/LOLv1/w_perc.pth
+  #   test: experiments/CIDNet_LOLv1/models/best_PSNR_G.pth
+
+  # [Optional] Path to load the resume training state.
+  # If `resume_state` is not set or the path does not exist, the training will start from scratch.
+  resume_state: experiments/CIDNet_LOLv1/training_state/latest.state
+
+  # Whether to strictly enforce that the keys in `resume_state` match the keys returned by this module's
+  # If set to False, additional or missing keys in `resume_state` will be ignored.
+  # <tips> If you want to fine-tune the pre-trained model, set `strict_load` to False.
+  strict_load: False
+
+# Model settings
+model: ImageModel
+
+# Network configuration.
+network:
+  # The class name of the network architecture.
+  # Must be registered in `basic.utils.registry.ARCH_REGISTRY` by using `@ARCH_REGISTRY.register()`.
+  type: CIDNet
+
+  # The remaining parameters are the arguments of the constructor of the network class.
+  channels: [36, 36, 72, 144]
+  heads: [1, 2, 4, 8]
+  norm: False
+  transform:  # sub-modules to create
+    type: RGB2HVI
+    scaled_on_start: true
+
+
+# training configuration.
+train:
+  # The number of epochs \ iterations to train.
+  # If `n_iter` is set, it will be ignored.
+  n_epoch: 1000
+  # n_iter: 600000
+
+  # Define the parameters for the future use.
+  warmup_epoch: 3  # -1: no warm up
+
+  # The `scheduler` is used to adjust the learning rate during training.
+  # The usage of `scheduler` refers to the `lr_scheduler` module in basic.models.lr_scheduler.
+  #   - type (str): the class name of the scheduler.
+  #   - [Optional] params (dict): the parameters of the scheduler.
+  scheduler:
+    type: GradualWarmupScheduler
+    multiplier: 1
+    total_epoch: ${warmup_epoch}   # placeholder is available in the configuration file.
+    after_scheduler:
+      type: CosineAnnealingRestartCyclicLR
+      periods: [ "${ n_epoch // 4 - warmup_epoch }", "${ n_epoch * 3 // 4 }" ]  # the expression in the list should be quoted to avoid YAML syntax error.
+      restart_weights: [ 1, 1 ]
+      eta_mins: [ 0.0002, 0.0000001 ]
+  # It is also possible to have a different scheduler for each module.
+  # scheduler:
+  #   - name: image_model
+  #     type: GradualWarmupScheduler
+  #     multiplier: 1
+  #     total_epoch: ${warmup_iter}
+  #     after_scheduler:
+  #       type: CosineAnnealingRestartCyclicLR
+  #       periods: [ "${ n_iter // 4 - warmup_iter }", "${ n_iter * 3 // 4 }" ]
+  #       restart_weights: [ 1, 1 ]
+  #       eta_mins: [ 0.0002, 0.0000001 ]
+  #   - name: memory_decoder
+  #     type: GradualWarmupScheduler
+  #     multiplier: 1
+  #     total_epoch: ${warmup_iter}
+  #     after_scheduler:
+  #       type: CosineAnnealingRestartCyclicLR
+  #       periods: [ "${ n_iter // 4 - warmup_iter }", "${ n_iter * 3 // 4 }" ]
+  #       restart_weights: [ 1, 1 ]
+  #       eta_mins: [ 0.00002, 0.00000001 ]
+
+
+  # The `optimizer` is used to update the parameters of the network during training.
+  # The usage of `optimizer` refers to the modules in  torch.optim.
+  optimizer:
+    type: Adam
+    lr: !!float 3e-4
+    # weight_decay: !!float 1e-4
+    betas: [ 0.9, 0.999 ]
+  # It is also possible to have a different scheduler for each module.
+  # optimizer:
+  #   - name: image_model
+  #     type: Adam
+  #     lr: !!float 3e-4
+  #     # weight_decay: !!float 1e-4
+  #     betas: [ 0.9, 0.999 ]
+  #   - name: memory_decoder
+  #     type: Adam
+  #     lr: !!float 3e-5  # set 10x smaller learning rate for the fine-tuning stage.
+  #     # weight_decay: !!float 1e-4
+  #     betas: [ 0.9, 0.999 ]
+
+  # Whether to use gradient clip to prevent the gradient explosion.
+  grad_clip: true
+  # It is also possible to have a detailed configuration for gradient clip.
+  # grad_clip:
+  #   value: true
+  #   params:
+  #     max_norm: 0.01
+  #     norm_type: 2
+
+  # Loss functions.
+  # The usage of `loss` refers to the `loss` module in basic.losses.
+  loss:
+    - type: L1Loss
+      params:
+        loss_weight: 1.0
+        reduction: mean
+  # The example of other loss functions are as follows:
+    - type: PerceptualLoss
+      params:
+        perceptual_weight: 0.01
+        layer_weights:
+          conv1_2: 1.0
+          conv2_2: 1.0
+          conv3_4: 1.0
+          conv4_4: 1.0
+    - type: SSIMLoss
+      params:
+        loss_weight: 0.0 # 0.5
+    - type: EdgeLoss
+      params:
+        loss_weight: 50.0
+
+  # Validation frequency.
+  val_start: !!int 5000      # start to validate after 5000 iterations.
+  val_frequency: !!int 5000  # validate every 5000 iterations.
+  # It is also possible to validate per epoch.
+  # val_start: !!int 5
+  # val_frequency_epoch: !!int 5
+
+
+# validation configurations.
+val:
+  # The `metrics` list contains the evaluation metrics to be performed in the validation phase.
+  # where `↑` means the higher the better, and `↓` means the lower the better.
+  # [Optional]
+  metrics:
+    - type: PSNR ↑
+    - type: SSIM ↑
+    - type: MABD ↓
+
+
+logger:
+  print_frequency: 100
+
+  save_checkpoint_frequency: !!int 5000
+  # It is also possible to save the checkpoint per epoch.
+  # save_checkpoint_frequency_epoch: !!int 5
+
+  save_latest_checkpoint_frequency: !!int 100
+  # It is also possible to save the latest checkpoint per epoch.
+  # save_latest_checkpoint_frequency_epoch: !!int 1
+
+  use_tb_logger: True
