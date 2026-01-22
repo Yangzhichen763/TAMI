@@ -118,8 +118,7 @@ This repository is released under the Apache 2.0 license as found in the [LICENS
 
 ## Acknowledgement
 
-TAMI is built with reference to the code of the following projects: [BasicSR](https://github.com/XPixelGroup/BasicSR), [Restormer](https://github.com/swz30/Restormer), [XMem](
-![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)) and [FastLLVE](https://github.com/Wenhao-Li-777/FastLLVE). Thanks for their awesome work!
+TAMI is built with reference to the code of the following projects: [BasicSR](https://github.com/XPixelGroup/BasicSR), [Restormer](https://github.com/swz30/Restormer), [XMem](https://github.com/hkchengrex/XMem) and [FastLLVE](https://github.com/Wenhao-Li-777/FastLLVE). Thanks for their awesome work!
 
 The README is built with reference to [URWKV](https://github.com/FZU-N/URWKV). Thanks for their awesome work!
 
