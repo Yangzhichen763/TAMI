@@ -23,7 +23,7 @@ Recent low-light image enhancement (LLIE) models have achieved impressive result
 
 ## Overview 🧩
 
-![Overview of LLVE framework wit our proposed TAMI](figures/Overview Framework.png)
+![Overview of LLVE framework wit our proposed TAMI](figures/Overview%20Framework.png)
 
 ## Main Results 📊
 
@@ -34,7 +34,7 @@ For a detailed usage guide of the visualization tool, see [visualization/README.
 <details>
 <summary>Quantitative results on SDSD-indoor</summary>
 
-![Quantitative comparison on SDSD-indoor](figures/Main Result Table1.png)
+![Quantitative comparison on SDSD-indoor](figures/Main%20Result%20Table1.png)
 
 </details>
 
@@ -42,7 +42,7 @@ For a detailed usage guide of the visualization tool, see [visualization/README.
 <details open>
 <summary>Qualitative results on SDSD-indoor</summary>
 
-![Qualitative comparison on SDSD-indoor](figures/Main Result Figure7.png)
+![Qualitative comparison on SDSD-indoor](figures/Main%20Result%20Figure7.png)
 
 </details>
 
@@ -50,7 +50,7 @@ For a detailed usage guide of the visualization tool, see [visualization/README.
 <details>
 <summary>Quantitative results on SDSD-outdoor</summary>
 
-![Quantitative comparison on SDSD-outdoor](figures/Main Result Table2.png)
+![Quantitative comparison on SDSD-outdoor](figures/Main%20Result%20Table2.png)
 
 </details>
 
@@ -58,7 +58,7 @@ For a detailed usage guide of the visualization tool, see [visualization/README.
 <details open>
 <summary>Qualitative results on SDSD-outdoor</summary>
 
-![Qualitative comparison on SDSD-outdoor](figures/Main Result Figure8.png)
+![Qualitative comparison on SDSD-outdoor](figures/Main%20Result%20Figure8.png)
 
 </details>
 
